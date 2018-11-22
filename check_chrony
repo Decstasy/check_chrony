@@ -1,0 +1,129 @@
+#!/usr/bin/env perl
+#===============================================================================
+#  DESCRIPTION: Icinga2 / Nagios Check for chrony time sync status and offset
+#
+#      OPTIONS: -h : Help
+#		-w [warning threshold in seconds]
+#		-c [critical threshold in seconds]
+#
+# REQUIREMENTS: Chrony, perl version 5.10.1+
+#
+#       AUTHOR: Dennis Ullrich (request@decstasy.de)
+#
+#     BUGS ETC: https://github.com/Decstasy/check_chrony
+#
+#      LICENSE: GPL v3 (GNU General Public License, Version 3)
+#               see https://www.gnu.org/licenses/gpl-3.0.txt
+#===============================================================================
+
+use 5.10.1;
+use strict;
+use warnings;
+use utf8;
+use Getopt::Std;
+no warnings 'experimental::smartmatch';
+
+#
+# Variables
+#
+my $chronyDaemonName = "chronyd";
+my @leapOk = ( "Normal" );
+
+my $rc = 3;
+my $msg= "";
+my $perfdata = "";
+
+#
+# Subroutines
+#
+
+sub help {
+  print "check_chrony [options]
+	-w [warning threshold in seconds]
+	-c [critical threshold in seconds]
+	e.g.: check_chrony -w 0.6 -c 2\n";
+  exit(3);
+}
+
+# Script exit with Nagios / Icinga typical output
+sub _exit {
+  my ( $return, $line ) = @_;
+  my @state = ( "OK", "WARNING", "CRITICAL", "UNKNOWN" );
+  print "$state[$return]: $line\n";
+  exit( $return );
+}
+
+# Checks if a process with $_[0] as name exists
+sub proc_exists {
+  my $PID = `ps -C $_[0] -o pid=`;
+  if ( ${^CHILD_ERROR_NATIVE} == 0 ){
+      return 1;
+  }
+  return 0;
+}
+
+#
+# Options
+#
+
+my %options=();
+getopts( "hw:c:", \%options );
+
+# Check input
+if ( keys %options == 0 || defined $options{h} ){
+  &help;
+}
+
+for my $key ( keys %options ){
+  if ( $options{$key} !~ /^[\d\.]+$/ ){
+    &_exit( 3, "Value of option -$key is not a valid number!" );
+  }
+}
+
+#
+# Check chrony process
+#
+
+&_exit( 2, "$chronyDaemonName is not running!" ) if not &proc_exists( $chronyDaemonName );
+
+#
+# Get tracking data
+#
+
+my $chronyOutput = `chronyc tracking`;
+&_exit( 3, "Chronyc tracking command failed!" ) if ${^CHILD_ERROR_NATIVE} != 0;
+
+my ( $offset, $dir ) = $chronyOutput =~ /(?:System\stime)[^\d]+([\d\.]+)(?:.*?)(fast|slow)/;
+my ( $leap ) = $chronyOutput =~ /(?:Leap)[^\:]+(?::\s+)([\w\h]+)/;
+
+#
+# Check stuff
+#
+
+# Check offset
+if ( $offset >= $options{"c"} ){
+  $rc = 2; # Critical
+}
+elsif ( $offset >= $options{"w"} ){
+  $rc = 1; # Warning
+}
+else {
+  $rc = 0; # Ok
+}
+
+# Prepare offset performace data
+$offset = $dir =~ "slow" ? "-$offset" : "+$offset";
+$msg = "Time offset of $offset seconds to reference.";
+$perfdata = "| offset=${offset}s;$options{'w'};$options{'c'}";
+
+# Check leap
+if( not $leap ~~ @leapOk ){
+  &_exit( 2, "Leap status \"$leap\" is not okay! $msg $perfdata" );
+}
+
+#
+# Return stuff
+#
+
+&_exit($rc, "$msg $perfdata");
+
