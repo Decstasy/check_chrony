@@ -113,8 +113,8 @@ else {
 
 # Prepare offset performace data
 $offset = $dir =~ "slow" ? "-$offset" : "+$offset";
-$msg = "Time offset of $offset seconds to reference.";
-$perfdata = "| offset=${offset}s;$options{'w'};$options{'c'}";
+$msg = sprintf( "Time offset of %+.9f seconds to reference.", $offset);
+$perfdata = sprintf( "|offset=%+.9fs;%.9f;%.9f", ${offset}, $options{'w'}, $options{'c'});
 
 # Check leap
 if( not $leap ~~ @leapOk ){
