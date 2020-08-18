@@ -21,7 +21,7 @@ use strict;
 use warnings;
 use utf8;
 use Getopt::Std;
-no warnings 'experimental::smartmatch';
+#no warnings 'experimental::smartmatch';
 
 #
 # Variables
