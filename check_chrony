@@ -3,8 +3,8 @@
 #  DESCRIPTION: Icinga2 / Nagios Check for chrony time sync status and offset
 #
 #      OPTIONS: -h : Help
-#		-w [warning threshold in seconds]
-#		-c [critical threshold in seconds]
+#               -w [warning threshold in seconds]
+#               -c [critical threshold in seconds]
 #
 # REQUIREMENTS: Chrony, perl version 5.10.1+
 #
@@ -21,13 +21,12 @@ use strict;
 use warnings;
 use utf8;
 use Getopt::Std;
-no warnings 'experimental::smartmatch';
 
 #
 # Variables
 #
 my $chronyDaemonName = "chronyd";
-my @leapOk = ( "Normal" );
+my $leapOk = "Normal";
 
 my $rc = 3;
 my $msg= "";
@@ -39,9 +38,9 @@ my $perfdata = "";
 
 sub help {
   print "check_chrony [options]
-	-w [warning threshold in seconds]
-	-c [critical threshold in seconds]
-	e.g.: check_chrony -w 0.6 -c 2\n";
+        -w [warning threshold in seconds]
+        -c [critical threshold in seconds]
+        e.g.: check_chrony -w 0.6 -c 2\n";
   exit(3);
 }
 
@@ -117,8 +116,8 @@ $msg = sprintf( "Time offset of %+.9f seconds to reference.", $offset);
 $perfdata = sprintf( "|offset=%.9fs;%.9f;%.9f", ${offset}, $options{'w'}, $options{'c'});
 
 # Check leap
-if( not $leap ~~ @leapOk ){
-  &_exit( 2, "Leap status \"$leap\" is not okay! $msg $perfdata" );
+if( $leap !~ $leapOk ){
+  &_exit( 2, "Chrony leap status \"$leap\" is not equal to \"$leapOk\"! $msg $perfdata" );
 }
 
 #
@@ -126,4 +125,3 @@ if( not $leap ~~ @leapOk ){
 #
 
 &_exit($rc, "$msg $perfdata");
-
