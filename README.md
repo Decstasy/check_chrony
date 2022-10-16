@@ -1,6 +1,6 @@
 # check_chrony
 Icinga2 / Nagios check for Chrony NTP &amp; PTP offset to reference.
-Performance data is also included and no sudo privileges are needed for execution.
+Performance data is also included and no sudo privileges are required for execution.
 
 ## Example
 ```bash
@@ -14,9 +14,12 @@ OK: Time offset of +0.000056025 seconds to reference. | offset=+0.000056025s;1;3
 Perl min. version 5.10.1
 
 ### Tested on
-* Ubuntu 16.04
-* Ubuntu 18.04
-* Debian 9
+* Ubuntu 16.04 - 22.04 LTS
+* Debian 9 - 11
+* CentOS 7,8, Stream
+* RHEL 7 - 9
+* Alma 9
+* Arch
 
 ### Parameters
 * -w [Warning threshold] : (required) in seconds (e.g. 2 or 0.4)
